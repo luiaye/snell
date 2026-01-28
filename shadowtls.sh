@@ -1,3 +1,4 @@
+
 #!/bin/bash
 # =========================================
 # 作者: luiaye
@@ -47,50 +48,12 @@ get_latest_version() {
     echo "$latest_version"
 }
 
-# 检查 SS 是否已安装
-check_ssrust() {
-    if [ ! -f "/usr/local/bin/ss-rust" ]; then
-        return 1
-    fi
-    return 0
-}
-
 # 检查 Snell 是否已安装
 check_snell() {
     if [ ! -f "/usr/local/bin/snell-server" ]; then
         return 1
     fi
     return 0
-}
-
-# 获取 SS 端口
-get_ssrust_port() {
-    local ssrust_conf="/etc/ss-rust/config.json"
-    if [ ! -f "$ssrust_conf" ]; then
-        return 1
-    fi
-    local port=$(jq -r '.server_port' "$ssrust_conf" 2>/dev/null)
-    echo "$port"
-}
-
-# 获取 SS 密码
-get_ssrust_password() {
-    local ssrust_conf="/etc/ss-rust/config.json"
-    if [ ! -f "$ssrust_conf" ]; then
-        return 1
-    fi
-    local password=$(jq -r '.password' "$ssrust_conf" 2>/dev/null)
-    echo "$password"
-}
-
-# 获取 SS 加密方式
-get_ssrust_method() {
-    local ssrust_conf="/etc/ss-rust/config.json"
-    if [ ! -f "$ssrust_conf" ]; then
-        return 1
-    fi
-    local method=$(jq -r '.method' "$ssrust_conf" 2>/dev/null)
-    echo "$method"
 }
 
 # 获取 Snell 端口
@@ -306,74 +269,6 @@ get_available_port() {
     
     echo -e "${RED}无法找到可用端口${RESET}"
     return 1
-}
-
-# 生成 SS 链接和配置
-generate_ss_links() {
-    local server_ip=$1
-    local listen_port=$2
-    local ssrust_password=$3
-    local ssrust_method=$4
-    local stls_password=$5
-    local stls_sni=$6
-    local backend_port=$7
-    
-    echo -e "\n${YELLOW}=== 服务器配置 ===${RESET}"
-    echo -e "服务器IP：${server_ip}"
-    echo -e "\nShadowsocks 配置："
-    echo -e "  - 端口：${backend_port}"
-    echo -e "  - 加密方式：${ssrust_method}"
-    echo -e "  - 密码：${ssrust_password}"
-    echo -e "\nShadowTLS 配置："
-    echo -e "  - 端口：${listen_port}"
-    echo -e "  - 密码：${stls_password}"
-    echo -e "  - SNI：${stls_sni}"
-    echo -e "  - 版本：3"
-    
-    # 生成 SS + ShadowTLS 合并链接
-    local userinfo=$(echo -n "${ssrust_method}:${ssrust_password}" | base64 | tr -d '\n')
-    local shadow_tls_config="{\"version\":\"3\",\"password\":\"${stls_password}\",\"host\":\"${stls_sni}\",\"port\":\"${listen_port}\",\"address\":\"${server_ip}\"}"
-    local shadow_tls_base64=$(echo -n "${shadow_tls_config}" | base64 | tr -d '\n')
-    local ss_url="ss://${userinfo}@${server_ip}:${backend_port}?shadow-tls=${shadow_tls_base64}#SS-${server_ip}"
-    
-    echo -e "\n${YELLOW}=== Surge 配置 ===${RESET}"
-    echo -e "SS-${server_ip} = ss, ${server_ip}, ${listen_port}, encrypt-method=${ssrust_method}, password=${ssrust_password}, shadow-tls-password=${stls_password}, shadow-tls-sni=${stls_sni}, shadow-tls-version=3, udp-relay=true"
-    
-    echo -e "\n${YELLOW}=== Shadowrocket 配置说明 ===${RESET}"
-    echo -e "1. 添加 Shadowsocks 节点："
-    echo -e "   - 类型：Shadowsocks"
-    echo -e "   - 地址：${server_ip}"
-    echo -e "   - 端口：${backend_port}"
-    echo -e "   - 加密方法：${ssrust_method}"
-    echo -e "   - 密码：${ssrust_password}"
-    
-    echo -e "\n2. 添加 ShadowTLS 节点："
-    echo -e "   - 类型：ShadowTLS"
-    echo -e "   - 地址：${server_ip}"
-    echo -e "   - 端口：${listen_port}"
-    echo -e "   - 密码：${stls_password}"
-    echo -e "   - SNI：${stls_sni}"
-    echo -e "   - 版本：3"
-
-    echo -e "\n${YELLOW}=== Shadowrocket分享链接 ===${RESET}"
-    echo -e "${GREEN}SS + ShadowTLS 链接：${RESET}${ss_url}"
-    
-    echo -e "\n${YELLOW}=== Shadowrocket二维码 ===${RESET}"
-    qrencode -t UTF8 "${ss_url}"
-    
-    echo -e "\n${YELLOW}=== Clash Meta 配置 ===${RESET}"
-    echo -e "proxies:"
-    echo -e "  - name: SS-${server_ip}"
-    echo -e "    type: ss"
-    echo -e "    server: ${server_ip}"
-    echo -e "    port: ${listen_port}"
-    echo -e "    cipher: ${ssrust_method}"
-    echo -e "    password: \"${ssrust_password}\""
-    echo -e "    plugin: shadow-tls"
-    echo -e "    plugin-opts:"
-    echo -e "      host: \"${stls_sni}\""
-    echo -e "      password: \"${stls_password}\""
-    echo -e "      version: 3"
 }
 
 # 生成 Snell 链接和配置
