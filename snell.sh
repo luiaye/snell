@@ -626,7 +626,7 @@ fi
 # 下载并执行最新版本的脚本
 echo -e "${CYAN}正在获取最新版本的管理脚本...${RESET}"
 TMP_SCRIPT=$(mktemp)
-if curl -sL https://raw.githubusercontent.com/luiaye/surge/refs/heads/main/snell.sh -o "$TMP_SCRIPT"; then
+if curl -sL https://raw.githubusercontent.com/luiaye/snell/refs/heads/main/snell.sh -o "$TMP_SCRIPT"; then
     bash "$TMP_SCRIPT"
     rm -f "$TMP_SCRIPT"
 else
